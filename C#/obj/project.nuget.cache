@@ -1,8 +1,16 @@
 {
   "version": 2,
-  "dgSpecHash": "831hbwI8fnMj4pilz0cdRtkG0EbzwyMEqQ14dphUgWBGhNpKKgVF9dw7pCCB9RVjKC1Kb9KHUhcQIjCCdQzaSA==",
+  "dgSpecHash": "vr0hn7cQYLBaMy8EI8r5pNansrE0bUosS2cIlGDdmN0BAeGaOFssHRe3VC1N9bOGQa7FFZUcJMoYZLKKqmzCfA==",
   "success": true,
   "projectFilePath": "C:\\Users\\Fatemeh\\Desktop\\ToDoList\\C#\\C#\\C#.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\Fatemeh\\.nuget\\packages\\microsoft.data.sqlite\\9.0.4\\microsoft.data.sqlite.9.0.4.nupkg.sha512",
+    "C:\\Users\\Fatemeh\\.nuget\\packages\\microsoft.data.sqlite.core\\9.0.4\\microsoft.data.sqlite.core.9.0.4.nupkg.sha512",
+    "C:\\Users\\Fatemeh\\.nuget\\packages\\sqlitepclraw.bundle_e_sqlite3\\2.1.10\\sqlitepclraw.bundle_e_sqlite3.2.1.10.nupkg.sha512",
+    "C:\\Users\\Fatemeh\\.nuget\\packages\\sqlitepclraw.core\\2.1.10\\sqlitepclraw.core.2.1.10.nupkg.sha512",
+    "C:\\Users\\Fatemeh\\.nuget\\packages\\sqlitepclraw.lib.e_sqlite3\\2.1.10\\sqlitepclraw.lib.e_sqlite3.2.1.10.nupkg.sha512",
+    "C:\\Users\\Fatemeh\\.nuget\\packages\\sqlitepclraw.provider.e_sqlite3\\2.1.10\\sqlitepclraw.provider.e_sqlite3.2.1.10.nupkg.sha512",
+    "C:\\Users\\Fatemeh\\.nuget\\packages\\system.memory\\4.5.3\\system.memory.4.5.3.nupkg.sha512"
+  ],
   "logs": []
 }
