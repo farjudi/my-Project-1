@@ -51,6 +51,7 @@ class Phone_book
                         UpdateContact(connection);
                         break;
                     case 4:
+                        SearchByName(connection);
                         break;
                     case 5:
                         return;
@@ -96,11 +97,13 @@ class Phone_book
         using (var cmd = new SqliteCommand(selectQuery, connection))
         using (SqliteDataReader reader = cmd.ExecuteReader())
         {
-            Console.WriteLine("A list of contacts ");
+            Console.WriteLine("A list of contacts "); Console.WriteLine("-----------------"); Console.WriteLine();
             while (reader.Read())
             {
                 Console.WriteLine($"id:{reader["Id"]},FirstName:{reader["First_name"]},LastName:{reader["Last_name"]},Phone:{reader["phone"]}");
+
             }
+            Console.WriteLine("-----------------"); Console.WriteLine();
         }
     }
 
@@ -133,6 +136,37 @@ class Phone_book
                 Console.WriteLine("ID not found");
 
         }
+
+    }
+
+    static void SearchByName(SqliteConnection connection)
+    {
+        Console.Write("enter the user name:\t   ");
+        string user_name = Console.ReadLine();
+
+
+        string search_Query = "SELECT * FROM contacts WHERE   First_name LIKE  @user_name";
+
+        using (var cmd = new SqliteCommand(search_Query, connection))
+        {
+            cmd.Parameters.AddWithValue("@user_name", "%" + user_name + "%");
+
+            using (var reader = cmd.ExecuteReader())
+            {
+                Console.WriteLine(" ");
+                bool found = false;
+                while (reader.Read())
+                {
+                    Console.WriteLine($"id:{reader["Id"]}, first name {reader["First_name"]}, last name {reader["Last_name"]}, phone number {reader["Phone"]}");
+                    found = true;
+                }
+                if (!found)
+                    Console.WriteLine("No results found.");
+            }
+
+
+        }
+
 
     }
 
