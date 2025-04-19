@@ -2,18 +2,19 @@
 
 using Microsoft.Data.Sqlite;
 using System.Numerics;
+using System.Xml.Linq;
 
 namespace Ph_Bo;
 class Phone_book
 {
     static void Main(string[] args)
     {
-        //create database
+        //connecting to database
         using (var connection = new SqliteConnection("Data Source=contacts.db;"))
         {
             connection.Open();
 
-            //if there is not table
+            //Creating a table for contacts
             string createTableQuery = @"
              CREATE TABLE IF NOT EXISTS contacts (    
              Id INTEGER  PRIMARY KEY AUTOINCREMENT,
@@ -21,48 +22,96 @@ class Phone_book
               Last_name  Text NOT NULL,
               Phone  Text NOT NULL    )";
 
+
             using (var cmd = new SqliteCommand(createTableQuery, connection))
             {
                 cmd.ExecuteNonQuery();
             }
 
+            //Creating a table for the owner
+            string createOwnerTableQuery = @"CREATE TABLE IF NOT EXISTS Owners
+            (Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            OwnerName  Text NOT NULL,
+            OwnerContact  Text NOT NULL  )";
+            using (var cmd = new SqliteCommand(createOwnerTableQuery, connection))
+            {
+                cmd.ExecuteNonQuery();
+            }
 
-            //main menu
+
 
             while (true)
             {
+                bool checkOwner = CheckOwnerContact(connection);
+
                 Console.WriteLine("Welcome to our program.");
-                Console.WriteLine("Please select the desired option.");
-                Console.WriteLine("1.Add contact  ");
-                Console.WriteLine("2.Show list");
-                Console.WriteLine("3.Edit audience");
-                Console.WriteLine("4.Search by name");
-                Console.WriteLine("5.Exit");
-                int choice = int.Parse(Console.ReadLine());
-                switch (choice)
+                if (checkOwner != true)
                 {
-                    case 1:
-                        AddContact(connection);
-                        break;
-                    case 2:
-                        DisplayContacts(connection);
-                        break;
-                    case 3:
-                        UpdateContact(connection);
-                        break;
-                    case 4:
-                        SearchByName(connection);
-                        break;
-                    case 5:
-                        return;
-                    default:
-                        Console.WriteLine("Choose the correct option.");
-                        break;
 
 
+                    Console.WriteLine("Please select the desired option.");
+                    Console.WriteLine("1.Add contact  ");
+                    Console.WriteLine("2.Show list");
+                    Console.WriteLine("3.Edit audience");
+                    Console.WriteLine("4.Search by name");
+                    Console.WriteLine("5.Exit");
+                    int choice = int.Parse(Console.ReadLine());
+                    switch (choice)
+                    {
+                        case 1:
+                            AddContact(connection);
+                            break;
+                        case 2:
+                            DisplayContacts(connection);
+                            break;
+                        case 3:
+                            UpdateContact(connection);
+                            break;
+                        case 4:
+                            SearchByName(connection);
+                            break;
+                        case 5:
+                            return;
+                        default:
+                            Console.WriteLine("Choose the correct option.");
+                            break;
+
+
+                    }
                 }
+                else
+                {
+                    Console.WriteLine("Enter owner information.\n ");
+                    Console.Write("name ::  ");
+                    string name = Console.ReadLine();
+                    Console.Write("phone number :: ");
+                    string phone = Console.ReadLine();
+
+                    string insertQuery = @"INSERT INTO Owners (OwnerName,OwnerContact) VALUES (@Owner_name,@Owner_phone) ";
+                    using (var cmd = new SqliteCommand(insertQuery, connection))
+                    {
+                        cmd.Parameters.AddWithValue("@Owner_name", name);
+                        cmd.Parameters.AddWithValue("@Owner_phone", phone);
+
+                        cmd.ExecuteNonQuery();
+                    }
+                    Console.WriteLine("added successfully");
+                }
+
+
             }
         }
+    }
+    //Does our notebook have an owner or not?
+    static bool CheckOwnerContact(SqliteConnection connection)
+    {
+        string OwnerQuery = @"SELECT COUNT(*) FROM Owners";
+        using (var cmd = new SqliteCommand(OwnerQuery, connection))
+        {
+            int count = Convert.ToInt32(cmd.ExecuteScalar());
+            return count == 0;
+        }
+
     }
 
     //Add member
@@ -138,7 +187,7 @@ class Phone_book
         }
 
     }
-
+    //Find by name
     static void SearchByName(SqliteConnection connection)
     {
         Console.Write("enter the user name:\t   ");
