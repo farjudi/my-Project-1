@@ -31,7 +31,6 @@ C:\Users\Fatemeh\Desktop\ToDoList\C#\C#\obj\Debug\net7.0\C#.GeneratedMSBuildEdit
 C:\Users\Fatemeh\Desktop\ToDoList\C#\C#\obj\Debug\net7.0\C#.AssemblyInfoInputs.cache
 C:\Users\Fatemeh\Desktop\ToDoList\C#\C#\obj\Debug\net7.0\C#.AssemblyInfo.cs
 C:\Users\Fatemeh\Desktop\ToDoList\C#\C#\obj\Debug\net7.0\C#.csproj.CoreCompileInputs.cache
-C:\Users\Fatemeh\Desktop\ToDoList\C#\C#\obj\Debug\net7.0\C#.csproj.CopyComplete
 C:\Users\Fatemeh\Desktop\ToDoList\C#\C#\obj\Debug\net7.0\C#.dll
 C:\Users\Fatemeh\Desktop\ToDoList\C#\C#\obj\Debug\net7.0\refint\C#.dll
 C:\Users\Fatemeh\Desktop\ToDoList\C#\C#\obj\Debug\net7.0\C#.pdb
@@ -39,3 +38,4 @@ C:\Users\Fatemeh\Desktop\ToDoList\C#\C#\obj\Debug\net7.0\C#.genruntimeconfig.cac
 C:\Users\Fatemeh\Desktop\ToDoList\C#\C#\obj\Debug\net7.0\ref\C#.dll
 C:\Users\Fatemeh\Desktop\ToDoList\C#\C#\bin\Debug\net7.0\runtimes\linux-musl-s390x\native\libe_sqlite3.so
 C:\Users\Fatemeh\Desktop\ToDoList\C#\C#\bin\Debug\net7.0\runtimes\linux-ppc64le\native\libe_sqlite3.so
+C:\Users\Fatemeh\Desktop\ToDoList\C#\C#\obj\Debug\net7.0\C#.csproj.CopyComplete
