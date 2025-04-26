@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Ph_Bo_Model
 {
-    internal class Owner : IOwner
+    public class Owner : IOwner
     {
         /// <summary>
         /// Represents a Owner with personal details such as id ,full name ,address and phone number. 

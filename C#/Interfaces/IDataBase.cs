@@ -15,22 +15,34 @@ namespace Ph_Bo_Interfaces
 
         public bool OpenConnection();
         public bool CloseConnection();
-
+        public bool CreateTableContact();
+        public bool CreateTableOwner();
         /// <summary>
         /// Making CRUD
         /// </summary>
 
-        public bool AddRow<T>();
-        public bool UpdateRow<T>();
-        public bool DeleteRow<T>(T entity);
+        public bool AddRowContact(Contact contact);
+        public bool UpdateRowContact(int id);
+        public bool DeleteRowContact(int  id);
+
+
+
+        //FOR OWNER 
+        public bool AddRowOwner();
+        public bool UpdateRowOwner(int id );
+        public bool DeleteRowOwner(int  id);
 
         /// <summary>
         /// Getting information by making a bet
         /// </summary>
 
-        public bool GetRow<T>(int id);
-        public bool GetRow<T>(string name);
-        public Contact GetAllRows<T>();
+        public bool GetRowContact(int id);
+        public bool GetRowContact(string name);
+
+        //for owner 
+        public bool GetRowOwner(int id);
+        public bool GetRowOwner(string name);
+
 
 
     }
