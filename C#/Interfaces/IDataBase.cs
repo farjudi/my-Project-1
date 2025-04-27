@@ -28,7 +28,7 @@ namespace Ph_Bo_Interfaces
 
 
         //FOR OWNER 
-        public bool AddRowOwner();
+        public bool AddRowOwner(Owner owner);
         public bool UpdateRowOwner(int id );
         public bool DeleteRowOwner(int  id);
 

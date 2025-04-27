@@ -97,22 +97,6 @@ namespace C_.DataContext
         }
 
 
-        public Contact GetDataContact()
-        {
-            var contact = new Contact();
-
-            Console.Write("Enter first name: ");
-            contact.FirstName = Console.ReadLine();
-
-            Console.Write("Enter last name: ");
-            contact.LastName = Console.ReadLine();
-
-            Console.Write("Enter phone number: ");
-            contact.PhoneNumber = Console.ReadLine();
-
-            return contact; 
-        }
-
         public bool AddRowContact(Contact contact)
         {
 
@@ -122,11 +106,11 @@ namespace C_.DataContext
             {
                 if (!CreateTableContact()) return false;
 
-                string insertQuery = @"
+                var insertQuery = @"
                 INSERT INTO contacts (First_name, Last_name, PhoneNumber)
                 VALUES (@f_name, @l_name, @phone)";
 
-                using var command = new SqliteCommand(insertQuery, _connection);
+                var command = new SqliteCommand(insertQuery, _connection);
                 command.Parameters.AddWithValue("@f_name", contact.FirstName);
                 command.Parameters.AddWithValue("@l_name", contact.LastName);
                 command.Parameters.AddWithValue("@phone", contact.PhoneNumber);
@@ -145,7 +129,32 @@ namespace C_.DataContext
                 CloseConnection();
             }
         }
+        public bool AddRowOwner(Owner owner)
+        {
+            if (!OpenConnection()) return false;
+            try
+            {
+                if (!CreateTableOwner()) return false;
+                var insertQuery = $"INSERT INTO Owners(First_name, Last_name, PhoneNumber,Address) VALUES (@f_name,@l_name,@phone,@address)";
+                var command = new SqliteCommand(insertQuery, _connection);
+                command.Parameters.AddWithValue("@f_name", owner.FirstName);
+                command.Parameters.AddWithValue("@l_name", owner.LastName);
+                command.Parameters.AddWithValue("@phone", owner.PhoneNumber);
+                command.Parameters.AddWithValue("@address", owner.Address);
+                command.ExecuteNonQuery();
 
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error adding row: {ex.Message}");
+                return false;
+            }
+            finally
+            {
+                CloseConnection();
+            }
+        }
 
         public bool DeleteRowContact(int id)
         {
@@ -174,18 +183,15 @@ namespace C_.DataContext
 
 
         }
-
+        public bool DeleteRowOwner(int id)
+        {
+            throw new NotImplementedException();
+        }
         public bool UpdateRowContact(int id)
         {
             throw new NotImplementedException();
         }
 
-
-
-        public bool AddRowOwner()
-        {
-            throw new NotImplementedException();
-        }
 
         public bool UpdateRowOwner(int id)
         {
@@ -196,27 +202,168 @@ namespace C_.DataContext
 
         public bool GetRowContact(int id)
         {
-            throw new NotImplementedException();
+            if (!OpenConnection()) return false;
+
+            try
+            {
+                if (!CreateTableContact()) return false;
+                string selectQuery = "SELECT * FROM  contacts WHERE Id=@id";
+                var command = new SqliteCommand(selectQuery, _connection);
+
+                //To send value securely
+                command.Parameters.AddWithValue("@id", id);
+
+
+
+                var reader = command.ExecuteReader();
+
+                if (reader.HasRows)
+                {
+                    while (reader.Read())
+                    {
+
+                        Console.WriteLine($"id: {reader["Id"]}, FirstName: {reader["First_name"]}, LastName: {reader["Last_name"]}, Phone: {reader["PhoneNumber"]}");
+                    }
+                }
+
+
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching row: {ex.Message}");
+                return false;
+            }
+            finally
+            {
+                CloseConnection();
+            }
         }
 
         public bool GetRowContact(string name)
         {
-            throw new NotImplementedException();
+            if (!OpenConnection()) return false;
+
+            try
+            {
+                if (!CreateTableContact()) return false;
+                string selectQuery = "SELECT * FROM  contacts WHERE  First_name LIKE  @name  ";
+                var command = new SqliteCommand(selectQuery, _connection);
+
+                command.Parameters.AddWithValue("@name", "%" + name + "%");
+                //درواقع جایگری میشه با @name بالا در کوئری 
+
+
+
+
+                var reader = command.ExecuteReader();
+
+                if (reader.HasRows)
+                {
+                    while (reader.Read())
+                    {
+
+                        Console.WriteLine($"id: {reader["Id"]}, FirstName: {reader["First_name"]}, LastName: {reader["Last_name"]}, Phone: {reader["PhoneNumber"]}");
+                    }
+                }
+
+
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching row: {ex.Message}");
+                return false;
+            }
+            finally
+            {
+                CloseConnection();
+            }
         }
 
         public bool GetRowOwner(int id)
         {
-            throw new NotImplementedException();
+            if (!OpenConnection()) return false;
+
+            try
+            {
+                if (!CreateTableContact()) return false;
+                string selectQuery = "SELECT * FROM  Owners WHERE Id=@id";
+                var command = new SqliteCommand(selectQuery, _connection);
+
+                //To send value securely
+                command.Parameters.AddWithValue("@id", id);
+
+
+
+                var reader = command.ExecuteReader();
+
+                if (reader.HasRows)
+                {
+                    while (reader.Read())
+                    {
+
+                        Console.WriteLine($"id: {reader["Id"]}, FirstName: {reader["First_name"]}, LastName: {reader["Last_name"]}, Phone: {reader["PhoneNumber"]},Address{reader["Address"]}");
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching row: {ex.Message}");
+                return false;
+            }
+            finally
+            {
+                CloseConnection();
+            }
         }
 
         public bool GetRowOwner(string name)
         {
-            throw new NotImplementedException();
+            if (!OpenConnection()) return false;
+
+            try
+            {
+                if (!CreateTableContact()) return false;
+                string selectQuery = "SELECT * FROM  Owners WHERE  First_name LIKE  @name  ";
+                var command = new SqliteCommand(selectQuery, _connection);
+
+                command.Parameters.AddWithValue("@name", "%" + name + "%");
+                //درواقع جایگری میشه با @name بالا در کوئری 
+
+
+
+
+                var reader = command.ExecuteReader();
+
+                if (reader.HasRows)
+                {
+                    while (reader.Read())
+                    {
+
+                        Console.WriteLine($"id: {reader["Id"]}, FirstName: {reader["First_name"]}, LastName: {reader["Last_name"]}, Phone: {reader["PhoneNumber"]},Address{reader["Address"]}");
+                    }
+                }
+
+
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching row: {ex.Message}");
+                return false;
+            }
+            finally
+            {
+                CloseConnection();
+            }
         }
 
-        public bool DeleteRowOwner(int id)
-        {
-            throw new NotImplementedException();
-        }
+
     }
 }
