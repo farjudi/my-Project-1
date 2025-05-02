@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Net;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,6 +23,9 @@ namespace C_.DataContext
             var path = Path.Combine(Environment.CurrentDirectory, dbName);
             _connection = new SqliteConnection($"Data Source={path}");
 
+            CreateTable();
+
+            Console.WriteLine("DB Path: " + path);
 
         }
         public bool OpenConnection()
@@ -49,19 +53,32 @@ namespace C_.DataContext
                 return false;
         }
 
-        public bool CreateTableContact()
+        public bool CreateTable()
         {
-            string createTableQuery = @"
+            if (!OpenConnection()) return false;
+
+            var createTableQuery = @"
              CREATE TABLE IF NOT EXISTS contacts (    
              Id INTEGER   PRIMARY KEY AUTOINCREMENT,
              First_name   Text NOT NULL,       
              Last_name    Text NOT NULL,
-             PhoneNumber  Text NOT NULL    )";
+             PhoneNumber  Text NOT NULL);
+
+             CREATE TABLE IF NOT EXISTS Owners (
+             Id INTEGER PRIMARY KEY AUTOINCREMENT,
+             First_name TEXT NOT NULL,
+             Last_name TEXT NOT NULL,
+             PhoneNumber TEXT NOT NULL,
+             Address TEXT NOT NULL
+             );
+";
+
 
 
             try
             {
-                using var command = new SqliteCommand(createTableQuery, _connection);
+
+                var command = new SqliteCommand(createTableQuery, _connection);
                 command.ExecuteNonQuery();
                 return true;
             }
@@ -69,42 +86,22 @@ namespace C_.DataContext
             {
                 Console.WriteLine($"Error creating table: {ex.Message}");
                 return false;
-            };
-        }
-
-        public bool CreateTableOwner()
-        {
-            string createTableQuery = @"
-             CREATE TABLE IF NOT EXISTS Owners (    
-             Id INTEGER   PRIMARY KEY AUTOINCREMENT,
-             First_name   Text NOT NULL,       
-             Last_name    Text NOT NULL,
-             PhoneNumber  Text NOT NULL ,
-             Address      Text NOT NULL  )";
-
-
-            try
-            {
-                using var command = new SqliteCommand(createTableQuery, _connection);
-                command.ExecuteNonQuery();
-                return true;
             }
-            catch (Exception ex)
+            finally
             {
-                Console.WriteLine($"Error creating table: {ex.Message}");
-                return false;
-            };
+                CloseConnection();
+            }
+
+
         }
 
 
         public bool AddRowContact(Contact contact)
         {
-
             if (!OpenConnection()) return false;
-
             try
             {
-                if (!CreateTableContact()) return false;
+
 
                 var insertQuery = @"
                 INSERT INTO contacts (First_name, Last_name, PhoneNumber)
@@ -134,8 +131,8 @@ namespace C_.DataContext
             if (!OpenConnection()) return false;
             try
             {
-                if (!CreateTableOwner()) return false;
-                var insertQuery = $"INSERT INTO Owners(First_name, Last_name, PhoneNumber,Address) VALUES (@f_name,@l_name,@phone,@address)";
+
+                var insertQuery = @"INSERT INTO Owners(First_name, Last_name, PhoneNumber,Address) VALUES (@f_name,@l_name,@phone,@address)";
                 var command = new SqliteCommand(insertQuery, _connection);
                 command.Parameters.AddWithValue("@f_name", owner.FirstName);
                 command.Parameters.AddWithValue("@l_name", owner.LastName);
@@ -155,6 +152,7 @@ namespace C_.DataContext
                 CloseConnection();
             }
         }
+
 
         public bool DeleteRowContact(int id)
         {
@@ -187,6 +185,8 @@ namespace C_.DataContext
         {
             throw new NotImplementedException();
         }
+
+
         public bool UpdateRowContact(int id)
         {
             throw new NotImplementedException();
@@ -200,13 +200,43 @@ namespace C_.DataContext
 
 
 
-        public bool GetRowContact(int id)
+        /// <summary>
+        /// Getting information by making a bet
+        /// </summary>
+
+        public T GetElementById<T>(int id) where T : IHuman
         {
-            if (!OpenConnection()) return false;
+            if (typeof(T) == typeof(Contact))
+                return (T)GetRowContact(id);
+            else if (typeof(T) == typeof(Owner))
+                return (T)GetRowOwner(id);
+            throw new NotImplementedException();
+
+
+
+        }
+        public List<T> GetElementByName<T>(string name) where T: IHuman
+        {
+            if (typeof(T) == typeof(Contact))
+                return GetRowContact(name) as List<T> ?? new List<T>();
+            else if (typeof(T) == typeof(Owner))
+                return GetRowOwner(name) as List<T> ?? new List<T>();
+
+            return null;
+
+        }
+
+        private IContact GetRowContact(int id)
+        {
+
+
+            if (!OpenConnection()) return null;
+            //if (!OpenConnection()) return new Contact();
+            //// چرا از اومد نمونه ساخت ! سازنده خالی  کال شد 
 
             try
             {
-                if (!CreateTableContact()) return false;
+
                 string selectQuery = "SELECT * FROM  contacts WHERE Id=@id";
                 var command = new SqliteCommand(selectQuery, _connection);
 
@@ -214,26 +244,29 @@ namespace C_.DataContext
                 command.Parameters.AddWithValue("@id", id);
 
 
-
                 var reader = command.ExecuteReader();
 
-                if (reader.HasRows)
-                {
-                    while (reader.Read())
-                    {
 
-                        Console.WriteLine($"id: {reader["Id"]}, FirstName: {reader["First_name"]}, LastName: {reader["Last_name"]}, Phone: {reader["PhoneNumber"]}");
-                    }
+                if (reader.Read())
+                {
+                    var contact = new Contact
+                    {
+                        FirstName = reader["First_name"]?.ToString() ?? string.Empty,
+                        LastName = reader["Last_name"]?.ToString() ?? string.Empty,
+                        PhoneNumber = reader["PhoneNumber"]?.ToString() ?? string.Empty
+                    };
+
+                    return contact;
                 }
 
+                return null;
 
 
-                return true;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error fetching row: {ex.Message}");
-                return false;
+                return null;
             }
             finally
             {
@@ -241,41 +274,47 @@ namespace C_.DataContext
             }
         }
 
-        public bool GetRowContact(string name)
+        private List<IContact> GetRowContact(string name)
         {
-            if (!OpenConnection()) return false;
+           
+            if (!OpenConnection())
+            {
+                Console.WriteLine("Connection failed");
+                return new List<IContact>();
+            }
 
+            //  if (!OpenConnection()) return new Contact();
+
+            var results = new List<IContact>();
             try
             {
-                if (!CreateTableContact()) return false;
-                string selectQuery = "SELECT * FROM  contacts WHERE  First_name LIKE  @name  ";
+                string selectQuery = "SELECT * FROM contacts WHERE First_name LIKE @name COLLATE NOCASE";
                 var command = new SqliteCommand(selectQuery, _connection);
-
                 command.Parameters.AddWithValue("@name", "%" + name + "%");
                 //درواقع جایگری میشه با @name بالا در کوئری 
 
 
-
-
                 var reader = command.ExecuteReader();
 
-                if (reader.HasRows)
-                {
-                    while (reader.Read())
-                    {
 
-                        Console.WriteLine($"id: {reader["Id"]}, FirstName: {reader["First_name"]}, LastName: {reader["Last_name"]}, Phone: {reader["PhoneNumber"]}");
-                    }
+                while (reader.Read())
+                {
+                    var contact = new Contact
+                    {
+                        Id = Convert.ToInt32(reader["Id"]),
+                        FirstName = reader["First_name"].ToString() ?? string.Empty,
+                        LastName = reader["Last_name"].ToString() ?? string.Empty,
+                        PhoneNumber = reader["PhoneNumber"].ToString() ?? string.Empty
+                    };
+                    results.Add(contact);
                 }
 
-
-
-                return true;
+                return results;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error fetching row: {ex.Message}");
-                return false;
+                return new List<IContact>();//Empty list 
             }
             finally
             {
@@ -283,13 +322,13 @@ namespace C_.DataContext
             }
         }
 
-        public bool GetRowOwner(int id)
+        private IOwner GetRowOwner(int id)
         {
-            if (!OpenConnection()) return false;
+            if (!OpenConnection()) return null;
 
             try
             {
-                if (!CreateTableContact()) return false;
+
                 string selectQuery = "SELECT * FROM  Owners WHERE Id=@id";
                 var command = new SqliteCommand(selectQuery, _connection);
 
@@ -300,21 +339,33 @@ namespace C_.DataContext
 
                 var reader = command.ExecuteReader();
 
-                if (reader.HasRows)
-                {
-                    while (reader.Read())
-                    {
 
-                        Console.WriteLine($"id: {reader["Id"]}, FirstName: {reader["First_name"]}, LastName: {reader["Last_name"]}, Phone: {reader["PhoneNumber"]},Address{reader["Address"]}");
-                    }
+
+
+                if (reader.Read())
+                {
+
+                    var owner = new Owner()
+                    {
+                        FirstName = reader["First_name"]?.ToString() ?? string.Empty,
+                        LastName = reader["Last_name"]?.ToString() ?? string.Empty,
+                        PhoneNumber = reader["PhoneNumber"]?.ToString() ?? string.Empty,
+                        Address = reader["Address"].ToString() ?? string.Empty
+
+                        //اگر مقدار داشت تبیدل کنه به استرینگ اگه نداشت رشته خالی برگدونه 
+
+                    };
+                    return owner;
+
+
                 }
 
-                return true;
+                return null;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error fetching row: {ex.Message}");
-                return false;
+                return null;
             }
             finally
             {
@@ -322,13 +373,19 @@ namespace C_.DataContext
             }
         }
 
-        public bool GetRowOwner(string name)
+        private List<IOwner> GetRowOwner(string name)
         {
-            if (!OpenConnection()) return false;
+            //if (!OpenConnection()) return null;
+            if (!OpenConnection())
+            {
+                Console.WriteLine("Connection could not be opened.");
+                return new List<IOwner>(); 
+            }
 
+            var results = new List<IOwner>();
             try
             {
-                if (!CreateTableContact()) return false;
+
                 string selectQuery = "SELECT * FROM  Owners WHERE  First_name LIKE  @name  ";
                 var command = new SqliteCommand(selectQuery, _connection);
 
@@ -340,23 +397,27 @@ namespace C_.DataContext
 
                 var reader = command.ExecuteReader();
 
-                if (reader.HasRows)
-                {
-                    while (reader.Read())
-                    {
 
-                        Console.WriteLine($"id: {reader["Id"]}, FirstName: {reader["First_name"]}, LastName: {reader["Last_name"]}, Phone: {reader["PhoneNumber"]},Address{reader["Address"]}");
-                    }
+                while (reader.Read())
+                {
+                    var owner = new Owner
+                    {
+                        Id = Convert.ToInt32(reader["Id"]),
+                        FirstName = reader["First_name"].ToString() ?? string.Empty,
+                        LastName = reader["Last_name"].ToString() ?? string.Empty,
+                        PhoneNumber = reader["PhoneNumber"]?.ToString() ?? string.Empty,
+                        Address = reader["Address"]?.ToString() ?? string.Empty
+
+                    };
+                    results.Add(owner);
                 }
 
-
-
-                return true;
+                return results;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error fetching row: {ex.Message}");
-                return false;
+                return new List<IOwner>();
             }
             finally
             {

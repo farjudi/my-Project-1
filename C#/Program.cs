@@ -11,9 +11,10 @@ class Phone_book
 {
     static void Main(string[] args)
     {
+
         DataBase db = new DataBase("phone_book.db");
+
         db.OpenConnection();
-        db.CreateTableContact();
 
 
         Console.WriteLine("Welcome to our program.");
@@ -42,7 +43,7 @@ class Phone_book
                             Console.Write("Enter phone: ");
                             string phone = Console.ReadLine();
                             db.AddRowContact(new Contact { FirstName = firstName, LastName = lastName, PhoneNumber = phone });
-                            Console.WriteLine("Contact added successfully!");
+                            //Console.WriteLine("Contact added successfully!");
                         }
                         else if (select == 'o')
                         {
@@ -55,50 +56,78 @@ class Phone_book
                             Console.WriteLine("Enter address");
                             string address = Console.ReadLine();
                             db.AddRowOwner(new Owner { FirstName = @firstName, LastName = @lastName, PhoneNumber = @phone, Address = @address });
-                            Console.WriteLine("Owner added successfully!");
+                            //Console.WriteLine("Owner added successfully!");
 
                         }
                         break;
                     case 2:
                         Console.WriteLine("show contact or owner  write oen of them :");
-                        var choes = Console.ReadLine();
-                        if (choes== "contact") 
-                        { 
+
+                        var user_choice = Console.ReadLine();
+
                         Console.WriteLine("Search by name or Id \t Write your choice ");
                         var selectUser = Console.ReadLine();
                         if (selectUser == "name")
                         {
                             Console.WriteLine("Enter the name for Search ");
-                            var name= Console.ReadLine();
-                            db.GetRowContact(name);
+                            var name = Console.ReadLine();
+                            if (user_choice == "contact")
+                            {
+                                var contact = db.GetElementByName<Owner>(name);
+                                if (contact == null || contact.Count == 0)
+                                {
+                                    Console.WriteLine("No owners found.");
+                                }
+                                else
+                                {
+                                    foreach (var c in contact)
+                                        Console.WriteLine($"ID: {c.Id}, Name: {c.FirstName} {c.LastName}, Phone: {c.PhoneNumber}");
+                                }
+                            }
+                            else if (user_choice == "owner")
+                            {
+                                var owners = db.GetElementByName<Owner>(name);
+                                if (owners == null || owners.Count == 0)
+                                {
+                                    Console.WriteLine("No owners found.");
+                                }
+                                else
+                                {
+                                    foreach (var o in owners)
+                                        Console.WriteLine($"ID: {o.Id}, Name: {o.FirstName} {o.LastName}, Phone: {o.PhoneNumber}, Address: {o.Address}");
+                                }
+
+                            }
+
 
                         }
                         else if (selectUser == "Id")
                         {
                             Console.WriteLine("enter the id  for show ");
                             int id = int.Parse(Console.ReadLine());
-                            db.GetRowContact(id);
-                        }
-                        }
-                        else if(choes== "owner")
-                        {
-                            Console.WriteLine("Search by name or Id \t Write your choice ");
-                            var selectUser = Console.ReadLine();
-                            if (selectUser == "name")
+                            if (user_choice == "contact")
                             {
-                                Console.WriteLine("Enter the name for Search ");
-                                var name = Console.ReadLine();
-                                db.GetRowOwner(name);
-
+                                var contact = db.GetElementById<Contact>(id);
+                                if (contact != null)
+                                    Console.WriteLine($"ID: {id}, Name: {contact.FirstName} {contact.LastName}, Phone: {contact.PhoneNumber}");
+                                else
+                                    Console.WriteLine("Contact not found.");
                             }
-                            else if (selectUser == "Id")
+
+                            else if (user_choice == "owner")
                             {
-                                Console.WriteLine("enter the id  for show ");
-                                int id = int.Parse(Console.ReadLine());
-                                db.GetRowOwner(id);
+                                var owner = db.GetElementById<Owner>(id);
+                                if (owner != null)
+                                    Console.WriteLine($"ID: {id}, Name: {owner.FirstName} {owner.LastName}, Phone: {owner.PhoneNumber}, Address: {owner.Address}");
+                                else
+                                    Console.WriteLine("Owner not found.");
                             }
 
                         }
+
+
+
+
                         break;
                     case 3:
 
@@ -115,7 +144,7 @@ class Phone_book
 
                 }
             }
-            
+
             //else
             //{
             //    Console.WriteLine("Enter owner information.\n ");

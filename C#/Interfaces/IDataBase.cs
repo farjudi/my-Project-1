@@ -15,12 +15,16 @@ namespace Ph_Bo_Interfaces
 
         public bool OpenConnection();
         public bool CloseConnection();
-        public bool CreateTableContact();
-        public bool CreateTableOwner();
+        public bool CreateTable();
+
         /// <summary>
         /// Making CRUD
         /// </summary>
 
+
+        public T GetElementById<T>(int id) where T : IHuman;
+        public List<T> GetElementByName<T>(string name) where T : IHuman;
+        //For Contact 
         public bool AddRowContact(Contact contact);
         public bool UpdateRowContact(int id);
         public bool DeleteRowContact(int  id);
@@ -32,17 +36,8 @@ namespace Ph_Bo_Interfaces
         public bool UpdateRowOwner(int id );
         public bool DeleteRowOwner(int  id);
 
-        /// <summary>
-        /// Getting information by making a bet
-        /// </summary>
-
-        public bool GetRowContact(int id);
-        public bool GetRowContact(string name);
-
-        //for owner 
-        public bool GetRowOwner(int id);
-        public bool GetRowOwner(string name);
-
+    
+      
 
 
     }
