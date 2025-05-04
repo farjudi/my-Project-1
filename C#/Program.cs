@@ -1,7 +1,6 @@
 ﻿using C_.DataContext;
-
-
 using Microsoft.Data.Sqlite;
+using Ph_Bo_Interfaces;
 using Ph_Bo_Model;
 using System.Numerics;
 using System.Xml.Linq;
@@ -26,41 +25,76 @@ class Phone_book
                 Console.WriteLine("2.Show list");
                 Console.WriteLine("3.Edit audience");
                 Console.WriteLine("4.Search by name");
-                Console.WriteLine("5.DELEDT ");
+                Console.WriteLine("5.Delete ");
                 Console.WriteLine("6.Exit");
                 int choice = int.Parse(Console.ReadLine());
                 switch (choice)
                 {
                     case 1:
-                        Console.WriteLine(" select to add for contact or owner writ the 'c' or 'o'  :");
+                        Console.WriteLine(" select to add for contact or owner writ the 'c' or 'o'  :\n");
                         var select = char.Parse(Console.ReadLine());
                         if (select == 'c')
                         {
-                            Console.Write("Enter first name : ");
-                            string firstName = Console.ReadLine();
-                            Console.Write("Enter last name : ");
-                            string lastName = Console.ReadLine();
-                            Console.Write("Enter phone: ");
-                            string phone = Console.ReadLine();
-                            db.AddRowContact(new Contact { FirstName = firstName, LastName = lastName, PhoneNumber = phone });
+                            Console.Write("Enter first name :   ");
+                            var firstName = Console.ReadLine();
+                            Console.Write("Enter last name :   ");
+                            var lastName = Console.ReadLine();
+                            Console.Write("Enter phone:   ");
+                            var phone = Console.ReadLine();
+                            var contact = new Contact
+                            {
+                                FirstName = firstName,
+                                LastName = lastName,
+                                PhoneNumber = phone
+                            };
+
+                            db.AddRowContact(contact);
+                            Console.WriteLine($"Saved contact with Id = {contact.Id}");
+
                             //Console.WriteLine("Contact added successfully!");
                         }
                         else if (select == 'o')
                         {
-                            Console.Write("Enter first name : ");
-                            string firstName = Console.ReadLine();
+                            Console.Write("Enter first name :  ");
+                            var firstName = Console.ReadLine();
                             Console.Write("Enter last name : ");
-                            string lastName = Console.ReadLine();
+                            var lastName = Console.ReadLine();
                             Console.Write("Enter phone: ");
-                            string phone = Console.ReadLine();
-                            Console.WriteLine("Enter address");
-                            string address = Console.ReadLine();
-                            db.AddRowOwner(new Owner { FirstName = @firstName, LastName = @lastName, PhoneNumber = @phone, Address = @address });
+                            var phone = Console.ReadLine();
+                            Console.WriteLine("Enter address:  ");
+                            var address = Console.ReadLine();
+                            var owner = new Owner
+                            {
+                                FirstName = firstName,
+                                LastName = lastName,
+                                PhoneNumber = phone,
+                                Address = address
+                            };
+                            db.AddRowOwner(owner);
+                            Console.WriteLine($"Saved owner with Id = {owner.Id}");
                             //Console.WriteLine("Owner added successfully!");
 
                         }
                         break;
                     case 2:
+                        Console.WriteLine("enter the table name      contacts or  Owners::");
+                        var _tableName= Console.ReadLine();
+                        db.DisplayAll(_tableName);
+
+                        break;
+                    case 3:
+                        Console.WriteLine("enter  id :");
+                        var idU = int.Parse(Console.ReadLine());
+                        Console.WriteLine("enter new  first name : ");
+                        var newFirstName = Console.ReadLine();
+
+                        Console.WriteLine("enter new last name : ");
+                        var newLastName = Console.ReadLine();
+                        Console.WriteLine("enter new phone : ");
+                        string newPhone = Console.ReadLine();
+
+                        break;
+                    case 4:
                         Console.WriteLine("show contact or owner  write oen of them :");
 
                         var user_choice = Console.ReadLine();
@@ -73,10 +107,12 @@ class Phone_book
                             var name = Console.ReadLine();
                             if (user_choice == "contact")
                             {
-                                var contact = db.GetElementByName<Owner>(name);
+                                var contact = db.GetElementByName<Contact>(name);
+                                //for check  
+                                Console.WriteLine(contact.Count);
                                 if (contact == null || contact.Count == 0)
                                 {
-                                    Console.WriteLine("No owners found.");
+                                    Console.WriteLine("No contact found.");
                                 }
                                 else
                                 {
@@ -125,17 +161,18 @@ class Phone_book
 
                         }
 
-
-
-
-                        break;
-                    case 3:
-
-                        break;
-                    case 4:
-
                         break;
                     case 5:
+                        Console.WriteLine("enter the id for Delete ");
+                        var U_id = int.Parse(Console.ReadLine());
+                        Console.WriteLine("enter the table name  Owners or contacts: ");
+                        var tableName = Console.ReadLine();
+                        if (db.DeleteRow(tableName, U_id))
+                        {
+                            Console.Write("delete successful ");
+                        }
+                        break;
+                    case 6:
                         return;
                     default:
                         Console.WriteLine("Choose the correct option.");

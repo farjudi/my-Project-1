@@ -27,17 +27,19 @@ namespace Ph_Bo_Interfaces
         //For Contact 
         public bool AddRowContact(Contact contact);
         public bool UpdateRowContact(int id);
-        public bool DeleteRowContact(int  id);
+        //public bool DeleteRowContact(int  id);
+
+        public bool DeleteRow(string tableNmae, int id);
 
 
 
         //FOR OWNER 
         public bool AddRowOwner(Owner owner);
-        public bool UpdateRowOwner(int id );
-        public bool DeleteRowOwner(int  id);
+        public bool UpdateRowOwner(int id);
+        //public bool DeleteRowOwner(int  id);
 
-    
-      
+
+
 
 
     }
