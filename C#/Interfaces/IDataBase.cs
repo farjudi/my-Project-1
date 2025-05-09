@@ -9,38 +9,14 @@ namespace Ph_Bo_Interfaces
 {
     public interface IDataBase
     {
-        /// <summary>
-        /// For database connections
-        /// </summary>
-
         public bool OpenConnection();
         public bool CloseConnection();
         public bool CreateTable();
 
-        /// <summary>
-        /// Making CRUD
-        /// </summary>
-
-
+        public bool InsertData<T>(T entity) where T : IHuman;
         public T GetElementById<T>(int id) where T : IHuman;
         public List<T> GetElementByName<T>(string name) where T : IHuman;
-        //For Contact 
-        public bool AddRowContact(Contact contact);
-        public bool UpdateRowContact(Contact upContact);
-        //public bool DeleteRowContact(int  id);
-
-        public bool DeleteRow(string tableNmae, int id);
-
-
-
-        //FOR OWNER 
-        public bool AddRowOwner(Owner owner);
-        public bool UpdateRowOwner(int id);
-        //public bool DeleteRowOwner(int  id);
-
-
-
-
+        public bool DeleteRow(int id);
 
     }
 }
