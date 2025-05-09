@@ -26,7 +26,7 @@ namespace Ph_Bo_Interfaces
         public List<T> GetElementByName<T>(string name) where T : IHuman;
         //For Contact 
         public bool AddRowContact(Contact contact);
-        public bool UpdateRowContact(int id);
+        public bool UpdateRowContact(Contact upContact);
         //public bool DeleteRowContact(int  id);
 
         public bool DeleteRow(string tableNmae, int id);
