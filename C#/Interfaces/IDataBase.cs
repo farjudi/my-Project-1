@@ -9,14 +9,14 @@ namespace Ph_Bo_Interfaces
 {
     public interface IDataBase
     {
-        public bool OpenConnection();
-        public bool CloseConnection();
-        public bool CreateTable();
-
-        public bool InsertData<T>(T entity) where T : IHuman;
-        public T GetElementById<T>(int id) where T : IHuman;
-        public List<T> GetElementByName<T>(string name) where T : IHuman;
-        public bool DeleteRow(int id);
+        public Task<bool> OpenConnectionAsync();
+        public Task<bool> CloseConnectionAsync();
+        public Task<bool> CreateTableAsync();
+        public  Task<T> UpdataDatabaseAsync<T>(T entity) where T : IHuman;
+        public Task<bool> InsertDataAsync<T>(T entity) where T : IHuman;
+        public Task<T> GetElementByIdAsync<T>(int id) where T : IHuman;
+        public Task<List<T>> GetElementByNameAsync<T>(string name) where T : IHuman;
+        public Task<bool> DeleteRowAsync(int id);
 
     }
 }

@@ -2,6 +2,8 @@
 using Ph_Bo_Interfaces;
 using Ph_Bo_Model;
 using System.Data;
+using System.Data.Common;
+using System.Net;
 
 namespace C_.DataContext
 {
@@ -17,8 +19,8 @@ namespace C_.DataContext
         {
             var path = Path.Combine(Environment.CurrentDirectory, dbName);
             _connection = new SqliteConnection($"Data Source={path}");
-            OpenConnection();
-            CreateTable();
+
+            CreateTableAsync();
             CheckOwner();
         }
 
@@ -37,11 +39,11 @@ namespace C_.DataContext
             }
         }
 
-        public bool OpenConnection()
+        public async Task<bool> OpenConnectionAsync()
         {
             try
             {
-                _connection.Open();
+                _connection.OpenAsync();
                 return true;
             }
             catch (Exception ex)
@@ -51,11 +53,11 @@ namespace C_.DataContext
             }
         }
 
-        public bool CloseConnection()
+        public async Task<bool> CloseConnectionAsync()
         {
             if (_connection.State == ConnectionState.Open)
             {
-                _connection.Close();
+                _connection.CloseAsync();
 
                 return true;
             }
@@ -63,7 +65,7 @@ namespace C_.DataContext
                 return false;
         }
 
-        public bool CreateTable()
+        public async Task<bool> CreateTableAsync()
         {
             var createTableQuery = @"
              CREATE TABLE IF NOT EXISTS contacts (    
@@ -81,10 +83,15 @@ namespace C_.DataContext
              Address TEXT NOT NULL
              );";
 
+
+
             try
             {
-                new SqliteCommand(createTableQuery, _connection).ExecuteNonQuery();
-                new SqliteCommand(createOwnerTable, _connection).ExecuteNonQuery();
+                if (!await OpenConnectionAsync()) return false;
+                var command1 = new SqliteCommand(createTableQuery, _connection);
+                await command1.ExecuteNonQueryAsync();
+                var command2 = new SqliteCommand(createOwnerTable, _connection);
+                await command2.ExecuteNonQueryAsync();
                 return true;
             }
             catch (Exception ex)
@@ -92,25 +99,32 @@ namespace C_.DataContext
                 Console.WriteLine($"Error creating table: {ex.Message}");
                 return false;
             }
+            finally
+            {
+                await CloseConnectionAsync();
+            }
         }
 
-        public bool InsertData<T>(T entity) where T : IHuman
+        public async Task<bool> InsertDataAsync<T>(T entity) where T : IHuman
         {
             switch (entity)
             {
                 case Contact contact:
-                    return AddRowContact(contact);
+                    return await AddRowContactAsync(contact);
                 case Owner owner:
-                    return AddRowOwner(owner);
+                    return await AddRowOwnerAsync(owner);
                 default:
                     return false;
             }
         }
 
-        private bool AddRowContact(Contact contact)
+        private async Task<bool> AddRowContactAsync(Contact contact)
         {
+
+
             try
             {
+                if (!await OpenConnectionAsync()) return false;
                 var insertQuery =
                     @"INSERT INTO contacts (First_name, Last_name, PhoneNumber) VALUES (@f_name, @l_name, @phone)";
 
@@ -119,13 +133,13 @@ namespace C_.DataContext
                 command.Parameters.AddWithValue("@l_name", contact.LastName);
                 command.Parameters.AddWithValue("@phone", contact.PhoneNumber);
 
-                command.ExecuteNonQuery();
+                await command.ExecuteNonQueryAsync();
 
 
                 //for get last id 
                 //last_insert_rowid() method in sqlite 
                 command = new SqliteCommand("SELECT last_insert_rowid();", _connection);
-                contact.Id = Convert.ToInt32(command.ExecuteScalar());
+                contact.Id = Convert.ToInt32(await command.ExecuteScalarAsync());
 
                 return true;
             }
@@ -134,12 +148,17 @@ namespace C_.DataContext
                 Console.WriteLine($"Error adding row: {ex.Message}");
                 return false;
             }
+            finally
+            {
+                await CloseConnectionAsync();
+            }
         }
 
-        private bool AddRowOwner(Owner owner)
+        private async Task<bool> AddRowOwnerAsync(Owner owner)
         {
             try
             {
+                if (!await OpenConnectionAsync()) return false;
                 var insertQuery =
                     @"INSERT INTO Owners (First_name, Last_name, PhoneNumber,Address) VALUES (@f_name,@l_name,@phone,@address)";
                 var command = new SqliteCommand(insertQuery, _connection);
@@ -147,9 +166,10 @@ namespace C_.DataContext
                 command.Parameters.AddWithValue("@l_name", owner.LastName);
                 command.Parameters.AddWithValue("@phone", owner.PhoneNumber);
                 command.Parameters.AddWithValue("@address", owner.Address);
-                command.ExecuteNonQuery();
+                await command.ExecuteNonQueryAsync();
+
                 command = new SqliteCommand("SELECT last_insert_rowid();", _connection);
-                owner.Id = Convert.ToInt32(command.ExecuteScalar());
+                owner.Id = Convert.ToInt32(await command.ExecuteScalarAsync());
                 return true;
             }
             catch (Exception ex)
@@ -157,15 +177,82 @@ namespace C_.DataContext
                 Console.WriteLine($"Error adding row: {ex.Message}");
                 return false;
             }
+            finally { await CloseConnectionAsync(); }
         }
 
-        public bool DeleteRow(int id)
+
+
+        /// <summary>
+        /// Update for database
+        /// </summary>
+        /// <param name="upContact"></param>
+        /// <returns></returns>
+        private async Task<bool> UpdateRowContactAsync(Contact upContact)
+        {
+            if (!await OpenConnectionAsync()) return false;
+
+            string updateQuery = "UPDATE Contacts  SET First_name=@first_name,Last_name=@last_name,PhoneNumber=@phone WHERE  Id=@id ";
+
+            using (var cmd = new SqliteCommand(updateQuery, _connection))
+            {
+                cmd.Parameters.AddWithValue("@id", upContact.Id);
+                cmd.Parameters.AddWithValue("@first_name", upContact.FirstName);
+                cmd.Parameters.AddWithValue("@last_name", upContact.LastName);
+                cmd.Parameters.AddWithValue("@phone", upContact.PhoneNumber);
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                if (rowsAffected > 0)
+                    Console.WriteLine("The update was successful.");
+                else
+                    Console.WriteLine("ID not found");
+            }
+            return true;
+        }
+        private async Task<bool> UpdateRowOwnerAsync(Owner upOwner)
+        {
+            if (!await OpenConnectionAsync()) return false;
+
+            string updateQuery = "UPDATE Owners  SET First_name=@first_name,Last_name=@last_name,PhoneNumber=@phone,Address=@address WHERE  Id=@id ";
+
+            using (var cmd = new SqliteCommand(updateQuery, _connection))
+            {
+                cmd.Parameters.AddWithValue("@id", upOwner.Id);
+                cmd.Parameters.AddWithValue("@first_name", upOwner.FirstName);
+                cmd.Parameters.AddWithValue("@last_name", upOwner.LastName);
+                cmd.Parameters.AddWithValue("@phone", upOwner.PhoneNumber);
+                cmd.Parameters.AddWithValue("@address", upOwner.Address);
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                if (rowsAffected > 0)
+                    Console.WriteLine("The update was successful.");
+                else
+                    Console.WriteLine("ID not found");
+            }
+            return true;
+        }
+
+        public async Task<T> UpdataDatabaseAsync<T>(T entity) where T : IHuman
+        {
+            if (entity is Contact contact)
+            {
+                bool success = await UpdateRowContactAsync(contact);
+                if(success)
+                return entity;
+            }
+            else if (entity is Owner owner)
+            {
+               bool success =await UpdateRowOwnerAsync(owner);
+                if(success) return entity;
+                
+            }
+            throw new NotImplementedException($"Type {typeof(T)} not supported.");
+        }
+        public async Task<bool> DeleteRowAsync(int id)
         {
             try
             {
+                if (!await OpenConnectionAsync()) return false;
                 var deleteQuery = $"DELETE FROM contacts WHERE Id = '{id}';";
                 var command = new SqliteCommand(deleteQuery, _connection);
-                var rowsAffected = command.ExecuteNonQuery();
+                var rowsAffected = await command.ExecuteNonQueryAsync();
                 if (rowsAffected > 0)
                 {
                     Console.WriteLine($"contact with ID {id} was deleted.");
@@ -182,48 +269,82 @@ namespace C_.DataContext
                 Console.WriteLine($"Error deleting row: {ex.Message}");
                 return false;
             }
-        }
-        public void DisplayAll(string tableName)
-        {
-            var query = $"SELECT * FROM {tableName}";
-            var cmd = new SqliteCommand(query, _connection);
-            var reader = cmd.ExecuteReader();
-            Console.WriteLine("A list of contacts ");
-            Console.WriteLine("-----------------");
-            Console.WriteLine();
-
-            while (reader.Read())
+            finally
             {
-                Console.WriteLine(
-                    $"id:{reader["Id"]},FirstName:{reader["First_name"]},LastName:{reader["Last_name"]},Phone:{reader["PhoneNumber"]}\t");
+                await CloseConnectionAsync();
             }
         }
+        public async Task DisplayAllAsync(string tableName)
+        {
+            try
+            {
+                if (!await OpenConnectionAsync()) return;
+
+                var query = $"SELECT * FROM {tableName}";
+                var cmd = new SqliteCommand(query, _connection);
+                var reader = await cmd.ExecuteReaderAsync();
+                Console.WriteLine("A list of contacts ");
+                Console.WriteLine("-----------------");
+                Console.WriteLine();
+
+                while (await reader.ReadAsync())
+                {
+                    Console.WriteLine(
+                        $"id:{reader["Id"]},FirstName:{reader["First_name"]},LastName:{reader["Last_name"]},Phone:{reader["PhoneNumber"]}\t");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error displaying data from table '{tableName}': {ex.Message}");
+            }
+            finally
+            {
+                await CloseConnectionAsync();
+            }
+        }
+
+
 
         /// <summary>
         /// Getting information by making a bet
         /// </summary>
-        public T GetElementById<T>(int id) where T : IHuman
+        public async Task<T> GetElementByIdAsync<T>(int id) where T : IHuman
         {
             if (typeof(T) == typeof(Contact))
-                return (T)GetRowContact(id);
+            {
+                var contact = await GetRowContactAsync(id);
+                return (T)contact;
+            }
             if (typeof(T) == typeof(Owner))
-                return (T)GetRowOwner(id);
-            throw new NotImplementedException();
+            {
+                var owner = await GetRowOwnerAsync(id);
+                return (T)owner;
+            }
+            throw new NotImplementedException($"Type {typeof(T)} not supported.");
         }
 
-        public List<T> GetElementByName<T>(string name) where T : IHuman
+        public async Task<List<T>> GetElementByNameAsync<T>(string name) where T : IHuman
         {
             if (typeof(T) == typeof(Contact))
-                return GetRowContact(name).Cast<T>().ToList();
+            {
+                var contacts = await GetRowContactAsync(name);
+                return contacts.OfType<T>().ToList();
+            }
+            // return await GetRowContact(name).Cast<T>().ToList();
             if (typeof(T) == typeof(Owner))
-                return GetRowOwner(name).Cast<T>().ToList();
+            {
+                var owners = await GetRowOwnerAsync(name);
+                return owners.OfType<T>().ToList();
+            }
+
             return new List<T>();
         }
 
-        private IContact GetRowContact(int id)
+        private async Task<IContact> GetRowContactAsync(int id)
         {
             try
             {
+                if (!await OpenConnectionAsync()) return null;
                 string selectQuery = "SELECT * FROM  contacts WHERE Id=@id";
                 var command = new SqliteCommand(selectQuery, _connection);
 
@@ -231,10 +352,10 @@ namespace C_.DataContext
                 command.Parameters.AddWithValue("@id", id);
 
 
-                var reader = command.ExecuteReader();
+                var reader = await command.ExecuteReaderAsync();
 
 
-                if (reader.Read())
+                if (await reader.ReadAsync())
                 {
                     var contact = new Contact
                     {
@@ -254,16 +375,20 @@ namespace C_.DataContext
                 Console.WriteLine($"Error fetching row: {ex.Message}");
                 return null;
             }
+            finally
+            {
+                await CloseConnectionAsync();
+            }
         }
 
-        private List<IContact> GetRowContact(string name)
+        private async Task<List<IContact>> GetRowContactAsync(string name)
         {
-            if (!OpenConnection())
+            if (!await OpenConnectionAsync())
             {
                 Console.WriteLine("Connection failed");
                 return new List<IContact>();
             }
-            //  if (!OpenConnection()) return new Contact();
+
             var results = new List<IContact>();
             try
             {
@@ -290,11 +415,16 @@ namespace C_.DataContext
                 Console.WriteLine($"Error fetching row: {ex.Message}");
                 return new List<IContact>(); //Empty list 
             }
+            finally
+            {
+                await CloseConnectionAsync();
+            }
         }
-        private IOwner GetRowOwner(int id)
+        private async Task<IOwner> GetRowOwnerAsync(int id)
         {
             try
             {
+                if (!await OpenConnectionAsync()) return null;
                 string selectQuery = "SELECT * FROM  Owners WHERE Id=@id";
                 var command = new SqliteCommand(selectQuery, _connection);
 
@@ -302,10 +432,10 @@ namespace C_.DataContext
                 command.Parameters.AddWithValue("@id", id);
 
 
-                var reader = command.ExecuteReader();
+                var reader = await command.ExecuteReaderAsync();
 
 
-                if (reader.Read())
+                if (await reader.ReadAsync())
                 {
                     var owner = new Owner()
                     {
@@ -326,29 +456,34 @@ namespace C_.DataContext
                 Console.WriteLine($"Error fetching row: {ex.Message}");
                 return null;
             }
-        }
-        private List<IOwner> GetRowOwner(string name)
-        {
-            //if (!OpenConnection()) return null;
-            if (!OpenConnection())
+            finally
             {
-                Console.WriteLine("Connection could not be opened.");
-                return new List<IOwner>();
+                await CloseConnectionAsync();
             }
-
+        }
+        private async Task<List<IOwner>> GetRowOwnerAsync(string name)
+        {
             var results = new List<IOwner>();
             try
             {
+                if (!await OpenConnectionAsync())
+                {
+                    Console.WriteLine("Connection could not be opened.");
+                    return new List<IOwner>();
+                }
+
+
+
                 var selectQuery = "SELECT * FROM  Owners WHERE  First_name LIKE  @name  ";
                 var command = new SqliteCommand(selectQuery, _connection);
 
                 command.Parameters.AddWithValue("@name", "%" + name + "%");
                 //درواقع جایگری میشه با @name بالا در کوئری 
 
-                var reader = command.ExecuteReader();
+                var reader = await command.ExecuteReaderAsync();
 
 
-                while (reader.Read())
+                while (await reader.ReadAsync())
                 {
                     var owner = new Owner
                     {
@@ -368,6 +503,11 @@ namespace C_.DataContext
                 Console.WriteLine($"Error fetching row: {ex.Message}");
                 return new List<IOwner>();
             }
+            finally
+            {
+                await CloseConnectionAsync();
+            }
+
         }
     }
 }

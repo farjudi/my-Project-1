@@ -2,6 +2,7 @@
 using Microsoft.Data.Sqlite;
 using Ph_Bo_Interfaces;
 using Ph_Bo_Model;
+using System.Net;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Xml.Linq;
@@ -12,32 +13,63 @@ class Phone_book
 {
     private static DataBase _dataBase;
     private static bool _appRunning = true;
-    private static void UpdateContact()
+    private  static async Task UpdateAsync()
     {
-        Console.WriteLine("enter  id :");
-        var idU = int.Parse(Console.ReadLine() ?? "0");
-        Console.WriteLine("enter new  first name : ");
-        var newFirstName = Console.ReadLine() ?? "";
-        Console.WriteLine("enter new last name : ");
-        var newLastName = Console.ReadLine() ?? "";
-        Console.WriteLine("enter new phone : ");
-        var newPhone = Console.ReadLine() ?? "";
-        var updated = new Contact()
-        {
-            Id = idU,
-            FirstName = newFirstName,
-            LastName = newLastName,
-            PhoneNumber = newPhone
-        };
+        Console.WriteLine("update the contact OR owner write");
 
+        var userSelect = Console.ReadLine();
+        if (userSelect == "contact")
+        {
+
+            Console.WriteLine("enter  id :");
+            var idU = int.Parse(Console.ReadLine() ?? "0");
+            Console.WriteLine("enter new  first name : ");
+            var newFirstName = Console.ReadLine() ?? "";
+            Console.WriteLine("enter new last name : ");
+            var newLastName = Console.ReadLine() ?? "";
+            Console.WriteLine("enter new phone : ");
+            var newPhone = Console.ReadLine() ?? "";
+            var updated = new Contact()
+            {
+                Id = idU,
+                FirstName = newFirstName ?? "",
+                LastName = newLastName ?? "",
+                PhoneNumber = newPhone ?? ""
+            };
+
+          await  _dataBase.UpdataDatabaseAsync(updated);
+        }
+        else if(userSelect == "owner")
+        {
+            Console.WriteLine("enter  id :");
+            var idU = int.Parse(Console.ReadLine() ?? "0");
+            Console.WriteLine("enter new  first name : ");
+            var newFirstName = Console.ReadLine() ?? "";
+            Console.WriteLine("enter new last name : ");
+            var newLastName = Console.ReadLine() ?? "";
+            Console.WriteLine("enter new phone : ");
+            var newPhone = Console.ReadLine() ?? "";
+            Console.WriteLine("enter the Address");
+            var newAddress = Console.ReadLine() ?? "";
+            var updated = new Owner()
+            {
+                Id = idU,
+                FirstName = newFirstName ?? "",
+                LastName = newLastName ?? "",
+                PhoneNumber = newPhone ?? "",
+                Address= newAddress ?? ""
+            };
+
+            _dataBase.UpdataDatabaseAsync(updated);
+        }
     }
-    private static void Display()
+    private static async Task DisplayAsync()
     {
-        _dataBase.DisplayAll("contacts");
+        await _dataBase.DisplayAllAsync("contacts");
         Console.WriteLine("enter Enter to continue");
         Console.ReadLine();
     }
-    private static void AddOwner()
+    private static async Task AddOwnerAsync()
     {
         if (_dataBase.HasOwner) return;
         var flag = true;
@@ -59,12 +91,12 @@ class Phone_book
                 PhoneNumber = phone ?? "",
                 Address = address ?? ""
             };
-            flag = !_dataBase.InsertData<Owner>(owner);
+            flag = !await _dataBase.InsertDataAsync<Owner>(owner);
             Console.Clear();
         }
     }
 
-    private static void AddContact()
+    private static async Task AddContact()
     {
         var flag = true;
         while (flag)
@@ -81,38 +113,38 @@ class Phone_book
                 LastName = lastName ?? "",
                 PhoneNumber = phone ?? "",
             };
-            Console.WriteLine(_dataBase.InsertData<Contact>(contact) ? "Contact added" : "Contact not added");
+            Console.WriteLine(await _dataBase.InsertDataAsync<Contact>(contact) ? "Contact added" : "Contact not added");
             Console.Write("Do you want to continue ? y/n");
             flag = Console.ReadKey().Key == ConsoleKey.Y;
             Console.Clear();
         }
     }
 
-    private static void DeleteContact()
+    private static async Task DeleteContact()
     {
         Console.WriteLine("Enter contact id: ");
         var id = int.Parse(Console.ReadLine() ?? "0");
-        _dataBase.DeleteRow(id);
+        await _dataBase.DeleteRowAsync(id);
     }
 
     private static void Exit()
     {
         _appRunning = false;
-        _dataBase.CloseConnection();
+
     }
 
-    private static void GetContacts()
+    private static async Task GetContacts()
     {
         Console.WriteLine("Enter contact id or name: ");
         var userInput = Console.ReadLine();
         if (int.TryParse(userInput, out var id))
         {
-            var contact = _dataBase.GetElementById<Contact>(id);
+            var contact = await _dataBase.GetElementByIdAsync<Contact>(id);
             Console.WriteLine($"id {contact.Id}  name {contact.FirstName + " " + contact.LastName} phone {contact.PhoneNumber}");
         }
         else
         {
-            var contacts = _dataBase.GetElementByName<Contact>(userInput);
+            var contacts = await _dataBase.GetElementByNameAsync<Contact>(userInput);
             foreach (var contact in contacts)
             {
                 Console.WriteLine($"id {contact.Id}  name {contact.FirstName + " " + contact.LastName} phone {contact.PhoneNumber}");
@@ -121,7 +153,7 @@ class Phone_book
         Console.Write("press enter to continue");
         Console.ReadLine();
     }
-    private static void Menu()
+    private static async Task Menu()
     {
         Console.WriteLine("Please select the desired option.");
         Console.WriteLine("1.Add contact");
@@ -136,19 +168,19 @@ class Phone_book
             switch (choice)
             {
                 case 1:
-                    AddContact();
+                    await AddContact();
                     break;
                 case 2:
-                    Display();
+                   await DisplayAsync();
                     break;
                 case 3:
-                    UpdateContact();
+                  await UpdateAsync();
                     break;
                 case 4:
-                    GetContacts();
+                    await GetContacts();
                     break;
                 case 5:
-                    DeleteContact();
+                    await DeleteContact();
                     break;
                 case 6:
                     Exit();
@@ -163,10 +195,15 @@ class Phone_book
         Console.Clear();
     }
 
-    static void Main(string[] args)
+    /// <summary>
+    ///  این متد رو چک کن نباید تسک باشه 
+    /// </summary>
+    /// <param name="args"></param>
+    /// <returns></returns>
+    static async Task Main(string[] args)
     {
         _dataBase = new DataBase("phone_book.db");
-        AddOwner();
+        await AddOwnerAsync();
         while (_appRunning)
         {
             Menu();
