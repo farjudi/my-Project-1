@@ -19,31 +19,39 @@ namespace C_.DataContext
         {
             var path = Path.Combine(Environment.CurrentDirectory, dbName);
             _connection = new SqliteConnection($"Data Source={path}");
-
-            CreateTableAsync();
-            CheckOwner();
+            ////پیاده سازی  این
+            //CreateTableAsync().RunSynchronously();
+            //CheckOwner();
         }
 
-        private void CheckOwner()
+        public async Task InitAsync()
+        {
+            await CreateTableAsync();
+           await CheckOwner();
+        }
+
+        private async Task CheckOwner()
         {
             try
             {
+                if (!await OpenConnectionAsync()) return;
                 var query = @"SELECT COUNT(*) FROM Owners";
-                var cmd = new SqliteCommand(query, _connection);
-                var count = Convert.ToInt32(cmd.ExecuteScalar());
+                var cmd =  new SqliteCommand(query, _connection);
+                var count = Convert.ToInt32(await cmd.ExecuteScalarAsync());
                 HasOwner = count > 0;
             }
             catch
             {
                 HasOwner = false;
             }
+
         }
 
         public async Task<bool> OpenConnectionAsync()
         {
             try
             {
-                _connection.OpenAsync();
+              await  _connection.OpenAsync();
                 return true;
             }
             catch (Exception ex)
@@ -57,7 +65,7 @@ namespace C_.DataContext
         {
             if (_connection.State == ConnectionState.Open)
             {
-                _connection.CloseAsync();
+              await _connection.CloseAsync();
 
                 return true;
             }
@@ -67,6 +75,7 @@ namespace C_.DataContext
 
         public async Task<bool> CreateTableAsync()
         {
+
             var createTableQuery = @"
              CREATE TABLE IF NOT EXISTS contacts (    
              Id INTEGER   PRIMARY KEY AUTOINCREMENT,
@@ -191,20 +200,20 @@ namespace C_.DataContext
         {
             if (!await OpenConnectionAsync()) return false;
 
-            string updateQuery = "UPDATE Contacts  SET First_name=@first_name,Last_name=@last_name,PhoneNumber=@phone WHERE  Id=@id ";
+            var  updateQuery = "UPDATE Contacts  SET First_name=@first_name,Last_name=@last_name,PhoneNumber=@phone WHERE  Id=@id ";
 
-            using (var cmd = new SqliteCommand(updateQuery, _connection))
-            {
-                cmd.Parameters.AddWithValue("@id", upContact.Id);
-                cmd.Parameters.AddWithValue("@first_name", upContact.FirstName);
-                cmd.Parameters.AddWithValue("@last_name", upContact.LastName);
-                cmd.Parameters.AddWithValue("@phone", upContact.PhoneNumber);
-                int rowsAffected = await cmd.ExecuteNonQueryAsync();
-                if (rowsAffected > 0)
-                    Console.WriteLine("The update was successful.");
-                else
-                    Console.WriteLine("ID not found");
-            }
+            var cmd = new SqliteCommand(updateQuery, _connection);
+
+            cmd.Parameters.AddWithValue("@id", upContact.Id);
+            cmd.Parameters.AddWithValue("@first_name", upContact.FirstName);
+            cmd.Parameters.AddWithValue("@last_name", upContact.LastName);
+            cmd.Parameters.AddWithValue("@phone", upContact.PhoneNumber);
+            int rowsAffected = await cmd.ExecuteNonQueryAsync();
+            if (rowsAffected > 0)
+                Console.WriteLine("The update was successful.");
+            else
+                Console.WriteLine("ID not found");
+
             return true;
         }
         private async Task<bool> UpdateRowOwnerAsync(Owner upOwner)
@@ -213,8 +222,8 @@ namespace C_.DataContext
 
             string updateQuery = "UPDATE Owners  SET First_name=@first_name,Last_name=@last_name,PhoneNumber=@phone,Address=@address WHERE  Id=@id ";
 
-            using (var cmd = new SqliteCommand(updateQuery, _connection))
-            {
+            var cmd = new SqliteCommand(updateQuery, _connection);
+            
                 cmd.Parameters.AddWithValue("@id", upOwner.Id);
                 cmd.Parameters.AddWithValue("@first_name", upOwner.FirstName);
                 cmd.Parameters.AddWithValue("@last_name", upOwner.LastName);
@@ -225,23 +234,23 @@ namespace C_.DataContext
                     Console.WriteLine("The update was successful.");
                 else
                     Console.WriteLine("ID not found");
-            }
+            
             return true;
         }
 
-        public async Task<T> UpdataDatabaseAsync<T>(T entity) where T : IHuman
+        public async Task<T> UpdateDatabaseAsync<T>(T entity) where T : IHuman
         {
             if (entity is Contact contact)
             {
                 bool success = await UpdateRowContactAsync(contact);
-                if(success)
-                return entity;
+                if (success)
+                    return entity;
             }
             else if (entity is Owner owner)
             {
-               bool success =await UpdateRowOwnerAsync(owner);
-                if(success) return entity;
-                
+                bool success = await UpdateRowOwnerAsync(owner);
+                if (success) return entity;
+
             }
             throw new NotImplementedException($"Type {typeof(T)} not supported.");
         }
@@ -250,8 +259,10 @@ namespace C_.DataContext
             try
             {
                 if (!await OpenConnectionAsync()) return false;
-                var deleteQuery = $"DELETE FROM contacts WHERE Id = '{id}';";
+                var deleteQuery = $"DELETE FROM contacts WHERE Id = @id ";
+
                 var command = new SqliteCommand(deleteQuery, _connection);
+                command.Parameters.AddWithValue("@id", id);
                 var rowsAffected = await command.ExecuteNonQueryAsync();
                 if (rowsAffected > 0)
                 {
@@ -283,7 +294,7 @@ namespace C_.DataContext
                 var query = $"SELECT * FROM {tableName}";
                 var cmd = new SqliteCommand(query, _connection);
                 var reader = await cmd.ExecuteReaderAsync();
-                Console.WriteLine("A list of contacts ");
+                Console.WriteLine("A list of  ");
                 Console.WriteLine("-----------------");
                 Console.WriteLine();
 
@@ -439,6 +450,7 @@ namespace C_.DataContext
                 {
                     var owner = new Owner()
                     {
+                        Id = Convert.ToInt32(reader["Id"]),
                         FirstName = reader["First_name"]?.ToString() ?? string.Empty,
                         LastName = reader["Last_name"]?.ToString() ?? string.Empty,
                         PhoneNumber = reader["PhoneNumber"]?.ToString() ?? string.Empty,

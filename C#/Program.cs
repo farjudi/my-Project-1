@@ -12,9 +12,13 @@ namespace Ph_Bo;
 class Phone_book
 {
     private static DataBase _dataBase;
+  
     private static bool _appRunning = true;
+
+
     private  static async Task UpdateAsync()
     {
+        
         Console.WriteLine("update the contact OR owner write");
 
         var userSelect = Console.ReadLine();
@@ -37,7 +41,7 @@ class Phone_book
                 PhoneNumber = newPhone ?? ""
             };
 
-          await  _dataBase.UpdataDatabaseAsync(updated);
+          await  _dataBase.UpdateDatabaseAsync(updated);
         }
         else if(userSelect == "owner")
         {
@@ -60,7 +64,7 @@ class Phone_book
                 Address= newAddress ?? ""
             };
 
-            _dataBase.UpdataDatabaseAsync(updated);
+          await  _dataBase.UpdateDatabaseAsync(updated);
         }
     }
     private static async Task DisplayAsync()
@@ -185,6 +189,9 @@ class Phone_book
                 case 6:
                     Exit();
                     break;
+                default:
+                    Console.WriteLine("Invalid choice. Please try again.");
+                    break;
             }
         }
         catch
@@ -203,10 +210,11 @@ class Phone_book
     static async Task Main(string[] args)
     {
         _dataBase = new DataBase("phone_book.db");
+       await _dataBase.InitAsync();
         await AddOwnerAsync();
         while (_appRunning)
         {
-            Menu();
+         await   Menu();
         }
     }
 }

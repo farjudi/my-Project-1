@@ -12,7 +12,7 @@ namespace Ph_Bo_Interfaces
         public Task<bool> OpenConnectionAsync();
         public Task<bool> CloseConnectionAsync();
         public Task<bool> CreateTableAsync();
-        public  Task<T> UpdataDatabaseAsync<T>(T entity) where T : IHuman;
+        public  Task<T> UpdateDatabaseAsync<T>(T entity) where T : IHuman;
         public Task<bool> InsertDataAsync<T>(T entity) where T : IHuman;
         public Task<T> GetElementByIdAsync<T>(int id) where T : IHuman;
         public Task<List<T>> GetElementByNameAsync<T>(string name) where T : IHuman;
